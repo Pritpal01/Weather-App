@@ -1,0 +1,34 @@
+import UIKit
+
+class ViewController: UIViewController {
+    @IBOutlet weak var weatherLabel: UILabel!
+    @IBOutlet weak var fetchWeatherButton: UIButton!
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        fetchWeatherButton.addTarget(self, action: #selector(fetchWeather), for: .touchUpInside)
+    }
+
+    @objc func fetchWeather() {
+        let apiKey = "YOUR_API_KEY"  // Replace with your API key
+        let urlString = "https://api.openweathermap.org/data/2.5/weather?q=London&appid=\(apiKey)"
+        guard let url = URL(string: urlString) else { return }
+
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            guard let data = data, error == nil else { return }
+            do {
+                let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                if let main = json?["main"] as? [String: Any],
+                   let temp = main["temp"] as? Double {
+                    let temperature = temp - 273.15  // Convert from Kelvin to Celsius
+                    DispatchQueue.main.async {
+                        self.weatherLabel.text = String(format: "Temperature: %.2f°C", temperature)
+                    }
+                }
+            } catch {
+                print("Error parsing JSON")
+            }
+        }
+        task.resume()
+    }
+}
